@@ -1,0 +1,141 @@
+/*
+  NAME       : Simon's Game
+  COMPONENTS : 3 LED, 3 Button Input, Registers
+  AUTHOR     : Shafi Ulla
+  DATE       : 10/12/2013
+  BOARD      : Arduino UNO
+*/
+
+//  LED pins
+int led[] = { 3, 7, 12 };
+// button pins
+int button[] = { 5, 10, 13 };
+// turn
+int turn = 1;
+// random LED sequence
+int sequence[10];
+
+void setup(){
+  // LED pins
+  for(int x = 0; x < 3; x++){
+    pinMode(led[x], OUTPUT);
+  }
+  // button pins
+  for(int x = 1; x < 3; x++){
+    pinMode(button[x], INPUT);
+  }
+
+  // serial debugging
+  Serial.begin(9600);
+
+  /*delay(5000);
+  for(int m = 0; m < 3; m++){
+    if(digitalRead(button[m]) == HIGH){
+      Serial.print("You chose button : ");
+      Serial.println(button[m]);
+      randomSeed(analogRead(button[m]));
+      break;
+    }
+  }*/
+  
+}
+
+void loop(){
+  
+  int rdm = random(0,3);
+  randomSeed(analogRead(rdm));
+  Serial.print("Random no : ");
+  Serial.println(rdm);  
+  for(int x = 0; x < 10; x++){
+    sequence[x] = random(0, 3);
+  }
+
+  // 10 turns (restart on error
+  while(turn < 10){
+    // debug
+    Serial.print("=== ROUND : ");
+    Serial.print(turn);
+    Serial.println("===");
+    // function that shows the LED sequence
+    showSequence();
+    // function to get player input and check for errors
+    playerInput();
+    // next turn one more LED
+    turn = turn + 1;
+    // pause
+    delay(2000);
+  }
+}
+
+void showSequence(){
+  // turn on and off a number of LEDs equal to turn variable
+  for(int x = 0; x < turn; x++){
+    digitalWrite(led[sequence[x]], HIGH);
+    delay(500);
+    digitalWrite(led[sequence[x]], LOW);
+    delay(500);
+    // debug
+    Serial.print(sequence[x]);
+  }
+  Serial.println();
+}
+
+void playerInput(){
+  // check a number of buttons equal to turn
+  for(int x = 0; x < turn; x++){
+    Serial.println("waiting for input");
+    // waits for a button press (0 = not pressed, 1 = pressed)
+    int buttonPressed = 0;
+    while(buttonPressed == 0){
+      // check the 4 buttons
+      for(int y = 0; y < 3; y++){
+        // on button press
+        if(digitalRead(button[y]) == HIGH){
+          // debug
+          Serial.print("button ");
+          Serial.print(y);
+          Serial.println(" pressed");
+          // turn on the matching LED
+          digitalWrite(led[y], HIGH);
+          delay(200);
+          digitalWrite(led[y], LOW);
+          delay(200);
+          // on error
+          if(y != sequence[x]){
+            Serial.println("Wrong button!\n");
+            // flash the LEDs
+            for(int i = 0; i < 3; i++){
+              digitalWrite(led[i], HIGH);
+            }
+            delay(500);
+            for(int i = 0; i < 3; i++){
+              digitalWrite(led[i], LOW);
+            }
+           int rdm = random(0,3);
+            randomSeed(analogRead(rdm));
+            Serial.print("Random no : ");
+            Serial.println(rdm);  
+            for(int x = 0; x < 10; x++){
+              sequence[x] = random(0, 3);
+            }
+            
+            delay(500);           
+            // reset turn and start over (same sequence)
+            //
+            turn = 0;
+            // exit function
+            return;
+          }
+          // store button pressed event
+          buttonPressed = 1;
+          // exit for loop (one of the four buttons pressed)
+          // back to while loop
+          break;
+        }
+      }
+    }   
+    // delay (debounce)
+    delay(100);
+  }
+}
+
